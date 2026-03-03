@@ -48,5 +48,14 @@ python app.py
 ```
 * Running on http://127.0.0.1:5001
 
+## Third‑Party Code / Attribution
+
+The folder `backend/CXR‑RePaiR` contains code from the open‑source project:
+
+**CXR‑RePaiR**  
+https://github.com/rajpurkarlab/CXR‑RePaiR
+
+This code is included here and used as part of our X‑ray report system.
+
 ⚠️ This project is for research and educational purposes only.  
 It should not be used for clinical diagnosis or treatment.
