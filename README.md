@@ -24,7 +24,7 @@ The system supports three user roles:
   - View all reports from all users.
   - Access pending review reports.
   - Manage user accounts (create, delete, and modify roles).
-  - 
+    
 ## Installation
 
 ### Option 1: Using Python 3.10 / 3.11 (Recommended)
