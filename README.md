@@ -1,3 +1,6 @@
+# AI X-Ray Report Generator
+Automatically generates accurate medical reports from chest X-ray images using a pretrained medical AI model.
+
 ## Features
 
 - **Purpose:** Use a pretrained medical AI model to generate accurate medical reports from chest X-ray images.
