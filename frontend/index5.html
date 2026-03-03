@@ -1,0 +1,1666 @@
+<!DOCTYPE html>
+<html class="wide wow-animation" lang="en">
+  <head> 
+    <!-- Site Title-->
+    <title>Medical Report Management System</title>
+    <meta name="format-detection" content="telephone=no">
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="utf-8">
+    <link rel="icon" href="images/favicon.png" type="image/x-icon">
+    <!-- Stylesheets-->
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Lato:400,700%7CQuattrocento+Sans:400,700">
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <link rel="stylesheet" href="css/fonts.css">
+    <link rel="stylesheet" href="css/style.css">
+    
+    <!-- Custom Styles -->
+    <style>
+        /* Authentication Modal Styles */
+        .auth-modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            overflow-y: auto;
+        }
+        
+        .auth-modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 40px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        .auth-modal h3 {
+            margin-bottom: 30px;
+            color: #333;
+        }
+        
+        /* User Info Bar */
+        .user-info-bar {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 999;
+            display: none;
+        }
+        
+        .user-info-bar.active {
+            display: block;
+        }
+        
+        /* Permission Control Display/Hide */
+        .auth-required, .doctor-only, .admin-only {
+            display: none !important;
+        }
+        
+        /* Only regular users see auth-required sections */
+        body.role-user .auth-required {
+            display: block !important;
+        }
+        
+        body.role-doctor .doctor-only,
+        body.role-admin .doctor-only {
+            display: block !important;
+        }
+        
+        body.role-admin .admin-only {
+            display: block !important;
+        }
+        
+
+        /* Prevent floating-label overlap: hide labels and rely on placeholders */
+        .auth-modal .form-label,
+        .section .form-label {
+            display: none !important;
+        }
+        .form-input::placeholder, textarea.form-input::placeholder {
+            color: #909090;
+        }
+        
+        /* Report Card Styles */
+        .report-card {
+            background: white;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border-left: 4px solid #007bff;
+        }
+        
+        .report-card h5 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .report-status {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+            margin: 5px 0;
+        }
+        
+        .status-draft { background: #f0f0f0; color: #666; }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-approved { background: #d4edda; color: #155724; }
+        .status-rejected { background: #f8d7da; color: #721c24; }
+
+        /* Sticky footer: keep footer at bottom when content is short */
+        html, body { height: 100%; }
+        .page { min-height: 100vh; display: flex; flex-direction: column; }
+        .page > .page-footer-full { margin-top: auto; }
+
+        /* Navbar alignment tweaks for desktop */
+        @media (min-width: 992px) {
+          .rd-navbar .rd-navbar-inner { display: flex; align-items: center; justify-content: space-between; }
+          .rd-navbar .rd-navbar-aside-right { display: flex; align-items: center; }
+          .rd-navbar .rd-navbar-nav-wrap { display: block; }
+          .rd-navbar .rd-navbar-nav { 
+            display: flex; 
+            align-items: center; 
+            gap: 24px; 
+            margin: 0; 
+            padding: 0; 
+            list-style: none; 
+          }
+          .rd-navbar .rd-navbar-nav > li { display: flex; align-items: center; }
+          .rd-navbar .rd-navbar-nav > li > a { padding: 12px 0; }
+        }
+
+        /* Strong color for action buttons */
+        .button-success { background-color: #28a745; border-color: #28a745; color: #fff; }
+        .button-success:hover { background-color: #218838; border-color: #1e7e34; color: #fff; }
+        .button-danger { background-color: #dc3545; border-color: #dc3545; color: #fff; }
+        .button-danger:hover { background-color: #c82333; border-color: #bd2130; color: #fff; }
+
+        /* Color-coded card accents by status */
+        .report-card { border-left: 4px solid #007bff; }
+        .report-card.status-draft { border-left-color: #6c757d; }
+        .report-card.status-pending { border-left-color: #ffc107; }
+        .report-card.status-approved { border-left-color: #28a745; }
+        .report-card.status-rejected { border-left-color: #dc3545; }
+        
+        /* Medical Term Highlight (English-only) */
+        .medical-term {
+            background: linear-gradient(to bottom, transparent 60%, #ffeb3b 60%);
+            padding: 0 2px;
+            cursor: help;
+            position: relative;
+        }
+        
+        .medical-term:hover::after {
+            content: attr(data-definition);
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            background: #333;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 3px;
+            white-space: nowrap;
+            font-size: 12px;
+            z-index: 10;
+        }
+        
+        /* Image Preview Area */
+        .image-preview-container {
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin: 20px 0;
+            min-height: 200px;
+            position: relative;
+            background: #fafafa;
+        }
+        
+        .image-preview-container.has-image {
+            border-color: #007bff;
+            background: white;
+        }
+        
+        .preview-image {
+            max-width: 100%;
+            max-height: 400px;
+            display: block;
+            margin: 0 auto;
+        }
+        
+        /* AI Assistant */
+        .ai-assistant {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 350px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.2);
+            display: none;
+            z-index: 1000;
+        }
+        
+        .ai-assistant.active {
+            display: block;
+        }
+        
+        .ai-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px 10px 0 0;
+            cursor: pointer;
+        }
+        
+        .ai-body {
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .ai-toggle-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            cursor: pointer;
+            z-index: 999;
+            display: none;
+        }
+        
+        body.logged-in .ai-toggle-btn {
+            display: block;
+        }
+        
+        /* User Management Table */
+        .user-table {
+            width: 100%;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .user-table th {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .user-table td {
+            padding: 12px 15px;
+            border-top: 1px solid #dee2e6;
+        }
+        
+        /* Loading Spinner */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+  </head>
+  <body>
+    <!-- Page-->
+    <div class="text-left page">
+      <!-- Page preloader-->
+      <div class="page-loader">
+        <div>
+          <div class="page-loader-body">
+            <div class="heartbeat"></div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- User Info Bar -->
+      <div class="user-info-bar" id="userInfoBar">
+        <strong>Current User:</strong> <span id="currentUserName"></span> | 
+        <strong>Role:</strong> <span id="currentUserRole"></span>
+      </div>
+      
+      <!-- Login/Register Modal -->
+      <div id="authModal" class="auth-modal">
+        <div class="auth-modal-content">
+          <h3 id="authTitle">User Login</h3>
+              <form id="authForm">
+                <div class="form-wrap">
+              <label class="form-label">Username</label>
+              <input type="text" class="form-input" id="authUsername" placeholder="Username" required>
+                </div>
+                <div class="form-wrap">
+              <label class="form-label">Password</label>
+              <input type="password" class="form-input" id="authPassword" placeholder="Password" required>
+                </div>
+            <div class="form-wrap" id="roleSelectWrap" style="display:none;">
+              <label class="form-label">Select Role</label>
+              <select class="form-input" id="authRole">
+                <option value="user">Regular User</option>
+                <option value="doctor">Doctor</option>
+              </select>
+            </div>
+            <div class="form-button">
+              <button type="submit" class="button button-primary button-block">Login</button>
+            </div>
+            <div style="text-align: center; margin-top: 15px;">
+              <a href="#" onclick="toggleAuthMode(event)">Switch to Register</a>
+            </div>
+          </form>
+        </div>
+      </div>
+      
+      <!-- Page Header-->
+      <header class="page-header">
+        <!-- RD Navbar-->
+        <div class="rd-navbar-wrap">
+          <nav class="rd-navbar rd-navbar-minimal" data-layout="rd-navbar-fixed" data-sm-layout="rd-navbar-fixed" data-md-layout="rd-navbar-fixed" data-md-device-layout="rd-navbar-fixed" data-lg-layout="rd-navbar-static" data-lg-device-layout="rd-navbar-static" data-md-stick-up-offset="40px" data-lg-stick-up-offset="40px" data-stick-up="true" data-sm-stick-up="true" data-md-stick-up="true" data-lg-stick-up="true">
+            <div class="rd-navbar-inner">
+              <!-- RD Navbar Panel-->
+              <div class="rd-navbar-panel">
+                <!-- RD Navbar Toggle-->
+                <button class="rd-navbar-toggle" data-rd-navbar-toggle=".rd-navbar-nav-wrap"><span></span></button>
+                <!-- RD Navbar Brand-->
+                <div class="rd-navbar-brand">
+                  <a class="brand-name" href="index.html" style="text-decoration: none;">
+                    <span style="font-size: 24px; margin-right: 8px;">🩺</span>
+                    <span style="color: #007bff; font-weight: bold;">Medical Report</span>
+                    <span style="color: black;">System</span>
+                  </a>
+                </div>
+              </div>
+              <div class="rd-navbar-aside-right">
+                <div class="rd-navbar-nav-wrap">
+                  <!-- RD Navbar Nav-->
+                  <ul class="rd-navbar-nav">
+                    <li id="navHomeItem" class="active"><a href="#home">Home</a></li>
+                    <li class="auth-required"><a href="#upload">Upload Report</a></li>
+                    <li class="auth-required"><a href="#myreports">My Reports</a></li>
+                    <li class="doctor-only"><a href="#review">Review Reports</a></li>
+                    <li class="admin-only"><a href="#users">User Management</a></li>
+                    <li id="loginNavItem"><a href="#" onclick="showAuthModal(event)">Login/Register</a></li>
+                    <li id="logoutNavItem" style="display:none;"><a href="#" onclick="logout()">Logout</a></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </nav>
+        </div>
+      </header>
+      
+      <!-- Homepage Carousel Swiper -->
+      <section class="swiper-modern context-dark section section-full-width" id="home" data-type="anchor">
+        <div class="swiper-container swiper-slider" data-clickable="true" data-slide-effect="fade" data-autoplay="4000" data-simulate-touch="false">
+          <div class="swiper-wrapper">
+            <!-- Slide 1: Upload Medical Image -->
+            <div class="swiper-slide" data-slide-bg="images/slide-01.jpg">
+              <div class="swiper-slide-caption">
+                <div class="section-lg">
+                  <div class="shell text-center">
+                    <p class="heading-4 heading-divider-modern" data-caption-animate="fadeInUp" data-caption-delay="250">
+                      Upload your chest X-ray image for intelligent analysis
+                    </p>
+                    <h1 data-caption-animate="fadeInUp" data-caption-delay="100">
+                      Medical Image Upload
+                    </h1>
+                    <a class="button button-white button-effect-ujarak" href="#" onclick="checkLoginAndGo(event, 'upload')" data-caption-animate="fadeInUp" data-caption-delay="450">
+                      Upload Now
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Slide 2: Generate Report -->
+            <div class="swiper-slide" data-slide-bg="images/slide-02.jpg">
+              <div class="swiper-slide-caption">
+                <div class="section-lg">
+                  <div class="shell text-center">
+                    <p class="heading-4 heading-divider-modern" data-caption-animate="fadeInUp" data-caption-delay="250">
+                      Generate professional diagnostic reports from uploaded images
+                    </p>
+                    <h1 data-caption-animate="fadeInUp" data-caption-delay="100">
+                      Smart Report Generation
+                    </h1>
+                    <a class="button button-white button-effect-ujarak" href="#" onclick="checkLoginAndGo(event, 'myreports')" data-caption-animate="fadeInUp" data-caption-delay="450">
+                      View Reports
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Slide 3: System Introduction (hidden after login) -->
+            <div class="swiper-slide slide-get-started" data-slide-bg="images/slide-03.jpg">
+              <div class="swiper-slide-caption">
+                <div class="section-lg">
+                  <div class="shell text-center">
+                    <p class="heading-4 heading-divider-modern" data-caption-animate="fadeInUp" data-caption-delay="250">
+                      Professional doctors review online to ensure report accuracy
+                    </p>
+                    <h1 data-caption-animate="fadeInUp" data-caption-delay="100">
+                      Professional Medical Team
+                    </h1>
+                    <a class="button button-white button-effect-ujarak" href="#" onclick="showAuthModal(event)" data-caption-animate="fadeInUp" data-caption-delay="450">
+                      Get Started
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="swiper-pagination"></div>
+          <div class="swiper-button-prev"></div>
+          <div class="swiper-button-next"></div>
+        </div>
+      </section>
+
+      <!-- Upload Report Section (Regular Users) -->
+      <section class="section section-lg bg-white auth-required" id="upload" data-type="anchor">
+        <div class="shell">
+          <h2 class="text-center">Upload Medical Image</h2>
+          <div class="divider center"></div>
+          <div class="range range-30">
+            <div class="cell-md-6">
+              <h4>Select Image File</h4>
+              <form id="uploadReportForm">
+                <div class="form-wrap">
+                  <input type="file" class="form-input" id="imageFile" accept="image/*,.dcm" required>
+                </div>
+                <div class="form-wrap" id="assignDoctorWrap">
+                  <label class="form-label">Assign Doctor</label>
+                  <select class="form-input" id="assignedDoctorSelect">
+                    <option value="">-- Select Doctor --</option>
+                  </select>
+                </div>
+                <div class="image-preview-container" id="imagePreviewContainer">
+                  <p>Please select a medical image file to upload</p>
+                </div>
+                <div class="form-wrap">
+                  <label class="form-label">Initial Description (Optional)</label>
+                  <textarea class="form-input" id="reportDescription" rows="3" placeholder="Enter symptoms or other relevant information..."></textarea>
+                </div>
+                <div class="form-button">
+                  <button type="submit" class="button button-primary">Generate Report</button>
+                </div>
+              </form>
+            </div>
+            <div class="cell-md-6">
+              <div id="generatedReportSection" style="display:none;">
+                <h4>Generated Report</h4>
+                <div class="report-card">
+                  <div id="reportContent"></div>
+                  <div style="margin-top: 20px;">
+                    <button class="button button-xs button-primary" onclick="highlightMedicalTerms()">Highlight Terms</button>
+                    <button class="button button-xs button-info" onclick="speakReport()">Read Aloud</button>
+                    <button class="button button-xs button-warning" onclick="generatePDF()">Generate PDF</button>
+                    <button class="button button-xs button-success" onclick="submitForReview()">Submit for Review</button>
+                  </div>
+                  <textarea id="reportEditArea" class="form-input" style="display:none; margin-top:12px; height:200px;"></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- My Reports List (Regular Users) -->
+      <section class="section section-lg bg-gray-lighter auth-required" id="myreports" data-type="anchor">
+        <div class="shell">
+          <h2 class="text-center">My Reports</h2>
+          <div class="divider center"></div>
+          <div id="myReportsList"></div>
+        </div>
+      </section>
+
+      <!-- Doctor Review Section (Doctors) -->
+      <section class="section section-lg bg-white doctor-only" id="review" data-type="anchor">
+        <div class="shell">
+          <h2 class="text-center">Pending Reports for Review</h2>
+          <div class="divider center"></div>
+          <div style="margin-bottom: 20px;">
+            <button class="button button-secondary" onclick="showBatchImport()">Batch Import Reports (JSON)</button>
+          </div>
+          <div id="pendingReportsList"></div>
+        </div>
+      </section>
+
+      <!-- Admin User Management (Administrators) -->
+      <section class="section section-lg bg-gray-lighter admin-only" id="users" data-type="anchor">
+        <div class="shell">
+          <h2 class="text-center">User Management</h2>
+          <div class="divider center"></div>
+          <table class="user-table">
+            <thead>
+              <tr>
+                <th>Username</th>
+                <th>Role</th>
+                <th>Registration Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="userTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- AI Assistant Button -->
+      <button class="ai-toggle-btn" onclick="toggleAIAssistant()">
+        <span class="mdi mdi-robot" style="font-size: 24px;"></span>
+      </button>
+      
+      <!-- AI Assistant Window -->
+      <div class="ai-assistant" id="aiAssistant">
+        <div class="ai-header" onclick="toggleAIAssistant()">
+          <h5 style="margin: 0;">Medical AI Assistant</h5>
+        </div>
+        <div class="ai-body">
+          <div id="aiMessages"></div>
+          <div class="form-wrap" style="margin-top: 10px;">
+            <input type="text" class="form-input" id="aiInput" placeholder="Ask about medical terms..." onkeypress="handleAIInput(event)">
+          </div>
+        </div>
+      </div>
+
+      <!-- Page Footer Simplified -->
+      <footer class="page-footer-full section section-full-width">
+        <div class="shell">
+          <div class="range range-15">
+            <div class="cell-sm-5">
+              <p class="copyright">
+                © <span class="copyright-year"></span> Medical Report Management System - CSIT998 Project
+              </p>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+    
+    <!-- Global Mailform Output-->
+    <div class="snackbars" id="form-output-global"></div>
+    
+    <!-- Javascript-->
+    <script src="js/core.min.js"></script>
+    <script src="js/script.js"></script>
+    
+    <!-- Custom JavaScript Code -->
+    <script>
+    // ========== IndexedDB Database Management Class ==========
+    class MedicalDB {
+        constructor() {
+            this.dbName = 'MedicalReportDB';
+            this.version = 1;
+            this.db = null;
+        }
+        
+        // Initialize database
+        async init() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(this.dbName, this.version);
+                
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => {
+                    this.db = request.result;
+                    resolve(this.db);
+                };
+                
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    
+                    // Create users table
+                    if (!db.objectStoreNames.contains('users')) {
+                        const userStore = db.createObjectStore('users', { keyPath: 'id', autoIncrement: true });
+                        userStore.createIndex('username', 'username', { unique: true });
+                    }
+                    
+                    // Create reports table
+                    if (!db.objectStoreNames.contains('reports')) {
+                        const reportStore = db.createObjectStore('reports', { keyPath: 'id', autoIncrement: true });
+                        reportStore.createIndex('ownerId', 'ownerId', { unique: false });
+                        reportStore.createIndex('status', 'status', { unique: false });
+                    }
+                };
+            });
+        }
+        
+        // Generic database operation method
+        async performTransaction(storeName, mode, callback) {
+            return new Promise((resolve, reject) => {
+                const transaction = this.db.transaction([storeName], mode);
+                const store = transaction.objectStore(storeName);
+                let req;
+                try {
+                    req = callback(store);
+                } catch (e) {
+                    reject(e);
+                    return;
+                }
+
+                // If IndexedDB request returned, resolve on success with its .result
+                if (req && typeof req.addEventListener === 'function') {
+                    req.addEventListener('success', () => resolve(req.result));
+                    req.addEventListener('error', () => reject(req.error));
+                } else if (req && 'onsuccess' in (req || {})) {
+                    req.onsuccess = () => resolve(req.result);
+                    req.onerror = () => reject(req.error);
+                } else {
+                    // Non-IDBRequest return (e.g., synchronous value)
+                    resolve(req);
+                }
+            });
+        }
+        
+        // User operations
+        async addUser(user) {
+            return this.performTransaction('users', 'readwrite', store => store.add(user));
+        }
+        
+        async getUser(username) {
+            return this.performTransaction('users', 'readonly', store => {
+                const index = store.index('username');
+                return index.get(username);
+            });
+        }
+        
+        async getAllUsers() {
+            return this.performTransaction('users', 'readonly', store => store.getAll());
+        }
+        
+        async updateUser(user) {
+            return this.performTransaction('users', 'readwrite', store => store.put(user));
+        }
+        
+        async deleteUser(userId) {
+            return this.performTransaction('users', 'readwrite', store => store.delete(userId));
+        }
+        
+        // Report operations
+        async addReport(report) {
+            return this.performTransaction('reports', 'readwrite', store => store.add(report));
+        }
+        
+        async getReport(reportId) {
+            return this.performTransaction('reports', 'readonly', store => store.get(reportId));
+        }
+        
+        async getUserReports(userId) {
+            return this.performTransaction('reports', 'readonly', store => {
+                const index = store.index('ownerId');
+                return index.getAll(userId);
+            });
+        }
+        
+        async getPendingReports() {
+            return this.performTransaction('reports', 'readonly', store => {
+                const index = store.index('status');
+                return index.getAll('pending');
+            });
+        }
+        
+        async updateReport(report) {
+            return this.performTransaction('reports', 'readwrite', store => store.put(report));
+        }
+        
+        async deleteReport(reportId) {
+            return this.performTransaction('reports', 'readwrite', store => store.delete(reportId));
+        }
+    }
+    
+    // ========== Global Variables ==========
+    let db = new MedicalDB();
+    let currentUser = null;
+    let isLoginMode = true;
+    let currentReportContent = '';
+    
+    // Medical terms dictionary (English definitions)
+    const medicalTerms = {
+        'lung': 'Lung: organ for gas exchange',
+        'heart': 'Heart: pumps blood through the body',
+        'pneumonia': 'Pneumonia: lung infection that inflames air sacs',
+        'consolidation': 'Consolidation: alveoli filled; denser area on X-ray',
+        'infiltrate': 'Infiltrate: substance within lungs, often inflammation',
+        'pleural effusion': 'Pleural effusion: fluid in the pleural space',
+        'cardiomegaly': 'Cardiomegaly: enlarged heart size',
+        'normal': 'Normal: within expected limits',
+        'abnormal': 'Abnormal: deviates from expected limits',
+        'lesion': 'Lesion: abnormal tissue area',
+        'opacity': 'Opacity: increased density on imaging',
+        'density': 'Density: degree of opacity on imaging',
+        'infection': 'Infection: invasion by microorganisms'
+    };
+    
+    // ========== Page Initialization ==========
+    document.addEventListener('DOMContentLoaded', async function() {
+        try {
+            // Initialize database
+            await db.init();
+            console.log('Database initialized successfully');
+            
+            // Always create/update admin account to ensure it works
+            try {
+                // Try to get existing admin
+                const existingAdmin = await db.getUser('admin');
+                if (existingAdmin) {
+                    // Update existing admin to ensure password is correct
+                    existingAdmin.password = btoa('admin123'); // Store base64 (demo only)
+                    existingAdmin.role = 'admin';
+                    await db.updateUser(existingAdmin);
+                    console.log('Admin user updated');
+                } else {
+                    // Create new admin
+                    await db.addUser({
+                        username: 'admin',
+                        password: btoa('admin123'), // Store base64 (demo only)
+                        role: 'admin',
+                        createdAt: new Date().toISOString()
+                    });
+                    console.log('Admin user created');
+                }
+            } catch (err) {
+                console.log('Creating new admin user...');
+                // If there's any error, try to create admin
+                await db.addUser({
+                    username: 'admin',
+                    password: btoa('admin123'),
+                    role: 'admin',
+                    createdAt: new Date().toISOString()
+                });
+            }
+            
+            // Check session status
+            const sessionUser = sessionStorage.getItem('currentUser');
+            if (sessionUser) {
+                currentUser = JSON.parse(sessionUser);
+                onLoginSuccess();
+            }
+            
+            // Set year
+            const yearElements = document.querySelectorAll('.copyright-year');
+            yearElements.forEach(el => el.textContent = new Date().getFullYear());
+            
+            // Add help text to login form
+            const authForm = document.getElementById('authForm');
+            if (authForm && !document.getElementById('loginHelp')) {
+                const helpText = document.createElement('p');
+                helpText.id = 'loginHelp';
+                helpText.style.cssText = 'color: #666; font-size: 12px; margin-top: 10px; text-align: center;';
+                helpText.innerHTML = 'Default admin: username: <strong>admin</strong>, password: <strong>admin123</strong>';
+                authForm.appendChild(helpText);
+            }
+
+            // Populate doctor list for assignment
+            await loadDoctorOptions();
+        } catch (error) {
+            console.error('Initialization error:', error);
+            alert('Database initialization failed. Please refresh the page.');
+        }
+    });
+    
+    // ========== Authentication Functions ==========
+    function showAuthModal(event) {
+        if (event) event.preventDefault();
+        document.getElementById('authModal').style.display = 'block';
+    }
+    
+    // Load doctors into assignment dropdown
+    async function loadDoctorOptions() {
+        const select = document.getElementById('assignedDoctorSelect');
+        if (!select) return;
+        try {
+            const users = await db.getAllUsers();
+            const doctors = (users || []).filter(u => u.role === 'doctor');
+            // Preserve first placeholder option
+            select.innerHTML = '<option value="">-- Select Doctor --</option>' +
+                doctors.map(d => `<option value="${d.id}">${d.username}</option>`).join('');
+        } catch (e) {
+            console.warn('Failed to load doctors', e);
+        }
+    }
+
+    function hideAuthModal() {
+        document.getElementById('authModal').style.display = 'none';
+    }
+    
+    function toggleAuthMode(event) {
+        if (event) event.preventDefault();
+        isLoginMode = !isLoginMode;
+        const title = document.getElementById('authTitle');
+        const button = document.querySelector('#authForm button[type="submit"]');
+        const roleWrap = document.getElementById('roleSelectWrap');
+        const link = document.querySelector('#authForm a');
+        
+        if (isLoginMode) {
+            title.textContent = 'User Login';
+            button.textContent = 'Login';
+            link.textContent = 'Switch to Register';
+            roleWrap.style.display = 'none';
+        } else {
+            title.textContent = 'User Registration';
+            button.textContent = 'Register';
+            link.textContent = 'Switch to Login';
+            roleWrap.style.display = 'block';
+        }
+    }
+    
+    // Handle login/register form
+    document.getElementById('authForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const username = document.getElementById('authUsername').value;
+        const password = document.getElementById('authPassword').value;
+        const role = document.getElementById('authRole').value;
+        
+        if (isLoginMode) {
+            // Login logic
+            const user = await db.getUser(username);
+            if (user && user.password === btoa(password)) {
+                currentUser = user;
+                sessionStorage.setItem('currentUser', JSON.stringify(user));
+                onLoginSuccess();
+                hideAuthModal();
+            } else {
+                alert('Invalid username or password!');
+            }
+        } else {
+            // Register logic
+            const existingUser = await db.getUser(username);
+            if (existingUser) {
+                alert('Username already exists!');
+                return;
+            }
+            if (role === 'admin') {
+                alert('Administrator account cannot be registered here. Ask an admin to grant admin role.');
+                return;
+            }
+            
+            const newUser = {
+                username: username,
+                password: btoa(password),
+                role: role,
+                createdAt: new Date().toISOString()
+            };
+            
+            await db.addUser(newUser);
+            alert('Registration successful! Please login.');
+            toggleAuthMode();
+        }
+    });
+    
+    // Handle successful login
+    function onLoginSuccess() {
+        // Update body classes
+        document.body.classList.add('logged-in');
+        document.body.classList.add('role-' + currentUser.role);
+        
+        // Update user info bar
+        document.getElementById('userInfoBar').classList.add('active');
+        document.getElementById('currentUserName').textContent = currentUser.username;
+        document.getElementById('currentUserRole').textContent = 
+            currentUser.role === 'admin' ? 'Administrator' : 
+            currentUser.role === 'doctor' ? 'Doctor' : 'Regular User';
+        
+        // Hide login link
+        document.getElementById('loginNavItem').style.display = 'none';
+        // Show logout link
+        const logoutItem = document.getElementById('logoutNavItem');
+        if (logoutItem) logoutItem.style.display = 'block';
+        
+        // Load relevant data
+        if (currentUser.role === 'user') {
+            loadMyReports();
+        }
+        if (currentUser.role === 'doctor' || currentUser.role === 'admin') {
+            loadPendingReports();
+        }
+        if (currentUser.role === 'admin') {
+            loadUserList();
+        }
+        
+        // Remove GET STARTED slide when logged in
+        try {
+            const gs = document.querySelector('.slide-get-started');
+            if (gs) gs.parentNode.removeChild(gs);
+        } catch (e) { /* ignore */ }
+
+        $(window).trigger("resize");
+
+        // Scroll to landing section for current role
+        scrollToRoleLanding();
+    }
+    
+    // Logout
+    function logout() {
+        currentUser = null;
+        sessionStorage.removeItem('currentUser');
+        document.body.classList.remove('logged-in', 'role-user', 'role-doctor', 'role-admin');
+        document.getElementById('userInfoBar').classList.remove('active');
+        document.getElementById('loginNavItem').style.display = 'block';
+        const logoutItem = document.getElementById('logoutNavItem');
+        if (logoutItem) logoutItem.style.display = 'none';
+        location.reload();
+    }
+    
+    // Check login status and navigate
+    function checkLoginAndGo(event, section) {
+        event.preventDefault();
+        if (!currentUser) {
+            showAuthModal();
+        } else {
+            // Restrict user-only sections for doctors/admins
+            if ((section === 'upload' || section === 'myreports') && currentUser.role !== 'user') {
+                if (currentUser.role === 'doctor') {
+                    alert('This section is for regular users. Redirecting to review.');
+                    const el = document.getElementById('review');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                } else if (currentUser.role === 'admin') {
+                    alert('This section is for regular users. Redirecting to user management.');
+                    const el = document.getElementById('users');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }
+                return;
+            }
+            const target = document.getElementById(section);
+            if (target) target.scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+
+    // Scroll to default landing by role
+    function scrollToRoleLanding() {
+        if (!currentUser) return;
+        let section = 'home';
+        if (currentUser.role === 'user') section = 'upload';
+        else if (currentUser.role === 'doctor') section = 'review';
+        else if (currentUser.role === 'admin') section = 'users';
+        const el = document.getElementById(section);
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    // ========== Report Upload and Generation ==========
+    // Image preview
+    document.getElementById('imageFile').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const container = document.getElementById('imagePreviewContainer');
+                container.classList.add('has-image');
+                container.innerHTML = `<img src="${e.target.result}" class="preview-image">`;
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+    
+    // Handle report upload form
+    document.getElementById('uploadReportForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const fileInput = document.getElementById('imageFile');
+        const file = fileInput.files[0];
+        const description = document.getElementById('reportDescription').value;
+        const assignedSelect = document.getElementById('assignedDoctorSelect');
+        const assignedDoctorId = assignedSelect && assignedSelect.value ? parseInt(assignedSelect.value, 10) : null;
+        const assignedDoctorName = assignedSelect && assignedSelect.options && assignedSelect.selectedIndex > 0
+            ? assignedSelect.options[assignedSelect.selectedIndex].text
+            : null;
+        
+        if (!file) {
+            alert('Please select an image file!');
+            return;
+        }
+        
+        // Read image as Base64
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            const imageData = e.target.result;
+            
+            // Generate mock report
+            const reportText = generateMockReport(description);
+            currentReportContent = reportText;
+            
+            // Save report to database
+            const report = {
+                ownerId: currentUser.id,
+                ownerName: currentUser.username,
+                images: [imageData],
+                text: reportText,
+                description: description,
+                lang: 'en',
+                assignedDoctorId: assignedDoctorId,
+                assignedDoctorName: assignedDoctorName,
+                status: 'draft',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+            
+            await db.addReport(report);
+            
+            // Display generated report
+            fetch("http://127.0.0.1:5000/api/upload", {
+                method: "POST",
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.summary) {
+                    // 直接把 summary 放到新区域
+                    document.getElementById("reportContent").innerHTML = "Summary: " + data.summary;
+                    document.getElementById("generatedReportSection").style.display = "block";
+                }
+            })
+            .catch(err => {
+                alert("Error: " + err);
+            });
+
+            
+            // Refresh report list
+            loadMyReports();
+            
+            alert('Report generated successfully!');
+        };
+        reader.readAsDataURL(file);
+    });
+    
+    // Generate mock report
+    function generateMockReport(description) {
+        const templates = [
+            'Chest X-ray Report:\nBilateral lung fields are clear with no obvious parenchymal abnormalities. Heart size and shape are normal. Mediastinum is centrally located. Both diaphragms are smooth.\nConclusion: No significant abnormalities detected on chest X-ray.',
+            'Chest X-ray Report:\nPatchy increased density is noted in the right lower lung, with blurred margins, suggesting possible pulmonary infection. Heart size normal, no mediastinal shift.\nRecommendation: Correlate with clinical symptoms, consider CT scan if necessary.',
+            'Chest X-ray Report:\nIncreased bilateral lung markings with blurring. Cardiac enlargement noted with cardiothoracic ratio approximately 0.55. Prominent aortic arch.\nImpression: Cardiac enlargement, recommend echocardiogram for further evaluation.'
+        ];
+        
+        const baseReport = templates[Math.floor(Math.random() * templates.length)];
+        
+        if (description) {
+            return baseReport + '\n\nPatient Description: ' + description;
+        }
+        
+        return baseReport;
+    }
+    
+    // ========== Text Processing Functions ==========
+    // Highlight medical terms
+    function highlightMedicalTerms() {
+        const content = document.getElementById('reportContent');
+        let html = content.innerHTML;
+        
+        // Remove previous highlights
+        html = html.replace(/<span[^>]*class="medical-term"[^>]*>([^<]+)<\/span>/g, '$1');
+        
+        // Highlight each medical term
+        for (let term in medicalTerms) {
+            const regex = new RegExp(term, 'gi');
+            const definition = medicalTerms[term];
+            html = html.replace(regex, match => `<span class="medical-term" data-translation="${translation}">${match}</span>`);
+        }
+        
+        content.innerHTML = html;
+    }
+    
+    // English-only highlight override
+    function highlightMedicalTerms() {
+        const content = document.getElementById('reportContent');
+        let text = content.textContent;
+        for (let term in medicalTerms) {
+            const regex = new RegExp(term, 'gi');
+            text = text.replace(regex, function(match) {
+                return '<span class="medical-term" data-definition="' + medicalTerms[term] + '">' + match + '</span>';
+            });
+        }
+        content.innerHTML = text;
+    }
+    
+    // Translate report (disabled - English only)
+    function translateReport() {
+        // No-op: English only
+        return;
+    }
+    
+    // Read report aloud
+    function speakReport() {
+        const text = document.getElementById('reportContent').textContent;
+        
+        if ('speechSynthesis' in window) {
+            // Stop previous speech
+            window.speechSynthesis.cancel();
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.9;
+            window.speechSynthesis.speak(utterance);
+        } else {
+            alert('Your browser does not support text-to-speech functionality');
+        }
+    }
+    
+    // Toggle inline editing of report
+    function toggleReportEdit() {
+        const area = document.getElementById('reportEditArea');
+        const contentDiv = document.getElementById('reportContent');
+        if (area.style.display === 'none' || area.style.display === '') {
+            area.value = contentDiv.textContent || '';
+            area.style.display = 'block';
+            area.focus();
+        } else {
+            area.style.display = 'none';
+        }
+    }
+    
+    // Save edited report back to DB and UI
+    async function saveReportEdit() {
+        const area = document.getElementById('reportEditArea');
+        const newText = (area.value || '').trim();
+        if (!newText) {
+            alert('Report text cannot be empty.');
+            return;
+        }
+        currentReportContent = newText;
+        document.getElementById('reportContent').textContent = newText;
+        area.style.display = 'none';
+        
+        try {
+            // Update the latest report of current user
+            const reports = await db.getUserReports(currentUser.id);
+            const latestReport = reports[reports.length - 1];
+            if (latestReport) {
+                latestReport.text = newText;
+                latestReport.updatedAt = new Date().toISOString();
+                await db.updateReport(latestReport);
+            }
+            loadMyReports();
+            alert('Report updated.');
+        } catch (e) {
+            console.error(e);
+            alert('Failed to update report.');
+        }
+    }
+    
+    // Generate PDF
+    function generatePDF() {
+        const printWindow = window.open('', '_blank');
+        const reportDate = new Date().toLocaleDateString('en-US');
+        
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Medical Report</title>
+                <style>
+                    body { font-family: Arial, sans-serif; padding: 40px; }
+                    h1 { text-align: center; color: #333; }
+                    .header { border-bottom: 2px solid #007bff; padding-bottom: 20px; margin-bottom: 30px; }
+                    .info { margin: 10px 0; }
+                    .content { margin: 30px 0; line-height: 1.8; white-space: pre-wrap; }
+                    .footer { margin-top: 50px; text-align: center; color: #666; }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1>Medical Examination Report</h1>
+                    <div class="info"><strong>Patient:</strong> ${currentUser.username}</div>
+                    <div class="info"><strong>Date:</strong> ${reportDate}</div>
+                </div>
+                <div class="content">${currentReportContent}</div>
+                <div class="footer">
+                    <p>Generated by Medical Report Management System</p>
+                </div>
+            </body>
+            </html>
+        `);
+        
+        printWindow.document.close();
+        printWindow.print();
+    }
+    
+    // Submit for review
+    async function submitForReview() {
+        if (confirm('Are you sure you want to submit this report for doctor review?')) {
+            // Get latest report
+            const reports = await db.getUserReports(currentUser.id);
+            const latestReport = reports[reports.length - 1];
+            
+            if (latestReport) {
+                // If user selected a doctor now, update the assignment
+                const sel = document.getElementById('assignedDoctorSelect');
+                if (sel && sel.value) {
+                    latestReport.assignedDoctorId = parseInt(sel.value, 10);
+                    latestReport.assignedDoctorName = sel.options[sel.selectedIndex].text;
+                }
+                if (!latestReport.assignedDoctorId) {
+                    alert('Please assign a doctor before submitting for review.');
+                    return;
+                }
+                latestReport.status = 'pending';
+                latestReport.updatedAt = new Date().toISOString();
+                await db.updateReport(latestReport);
+                
+                alert('Report submitted for review!');
+                loadMyReports();
+            }
+        }
+    }
+    
+    // ========== Report Management Functions ==========
+    // Load my reports
+    async function loadMyReports() {
+        if (!currentUser) return;
+        
+        const reports = await db.getUserReports(currentUser.id);
+        const container = document.getElementById('myReportsList');
+        
+        if (reports.length === 0) {
+            container.innerHTML = '<p class="text-center">No reports found</p>';
+            return;
+        }
+        
+        container.innerHTML = reports.map(report => `
+            <div class="report-card status-${report.status}">
+                <h5>Report #${report.id}</h5>
+                <p>${report.text.substring(0, 100)}...</p>
+                <p><span class="report-status status-${report.status}">${getStatusText(report.status)}</span></p>
+                <p><small>Created: ${new Date(report.createdAt).toLocaleString()}</small></p>
+                ${report.doctorReview ? `
+                    <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee;">
+                        <p><strong>Reviewed by:</strong> ${report.doctorReview.by}</p>
+                        <p><strong>Review Comments:</strong> ${report.doctorReview.comment || 'None'}</p>
+                    </div>
+                ` : ''}
+                <div style="margin-top: 15px;">
+                    <button class="button button-xs button-primary" onclick="viewReport(${report.id})">View</button>
+                    <button class="button button-xs button-warning" onclick="downloadReport(${report.id})">Download</button>
+                    <button class="button button-xs button-danger" onclick="deleteReport(${report.id})">Delete</button>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    // Get status text
+    function getStatusText(status) {
+        const statusMap = {
+            'draft': 'Draft',
+            'pending': 'Pending Review',
+            'approved': 'Approved',
+            'rejected': 'Rejected'
+        };
+        return statusMap[status] || status;
+    }
+    
+    // View report
+    async function viewReport(reportId) {
+        const report = await db.getReport(reportId);
+        if (report) {
+            alert('Report Content:\n\n' + report.text);
+        }
+    }
+    
+    // Download report
+    async function downloadReport(reportId) {
+        const report = await db.getReport(reportId);
+        if (report) {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(report, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", `report_${reportId}.json`);
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+    }
+    
+    // Delete report
+    async function deleteReport(reportId) {
+        if (confirm('Are you sure you want to delete this report?')) {
+            await db.deleteReport(reportId);
+            loadMyReports();
+            alert('Report deleted successfully');
+        }
+    }
+    
+    // ========== Doctor Review Functions ==========
+    // Load pending reports
+    async function loadPendingReports() {
+        const reports = await db.getPendingReports();
+        const container = document.getElementById('pendingReportsList');
+        
+        // Filter by assignment for doctors
+        let visible = reports;
+        if (currentUser && currentUser.role === 'doctor') {
+            visible = reports.filter(r => r.assignedDoctorId === currentUser.id);
+        }
+        
+        if (visible.length === 0) {
+            container.innerHTML = '<p class="text-center">No pending reports for review</p>';
+            return;
+        }
+        
+        container.innerHTML = visible.map(report => `
+            <div class="report-card status-pending">
+                <h5>Report #${report.id}</h5>
+                <p><strong>Submitted by:</strong> ${report.ownerName}</p>
+                <p><strong>Assigned to:</strong> ${report.assignedDoctorName || 'Unassigned'}</p>
+                <p>${report.text}</p>
+                ${report.images && report.images.length > 0 ? `<img src="${report.images[0]}" style="max-width: 200px; margin: 10px 0;">` : ''}
+                <div style="margin-top: 15px;">
+                    ${currentUser && currentUser.role === 'doctor' ? `
+                    <button class="button button-xs" onclick="doctorToggleEdit(${report.id})">Edit Text</button>
+                    <button class="button button-xs button-success" onclick="doctorSaveEdit(${report.id})">Save Text</button>
+                    ` : ''}
+                    <button class="button button-xs button-success" onclick="approveReport(${report.id})">Approve</button>
+                    <button class="button button-xs button-danger" onclick="rejectReport(${report.id})">Reject</button>
+                </div>
+                ${currentUser && currentUser.role === 'doctor' ? `
+                <textarea id="docEditArea_${report.id}" class="form-input" style="display:none; margin-top:12px; height:160px;">${report.text}</textarea>
+                ` : ''}
+            </div>
+        `).join('');
+    }
+    
+    // Approve report
+    async function approveReport(reportId) {
+        const comment = prompt('Enter review comments (optional):');
+        const report = await db.getReport(reportId);
+        
+        if (report) {
+            if (currentUser.role === 'doctor' && report.assignedDoctorId !== currentUser.id) {
+                alert('You can only approve reports assigned to you.');
+                return;
+            }
+            report.status = 'approved';
+            report.doctorReview = {
+                by: currentUser.username,
+                at: new Date().toISOString(),
+                result: 'Approved',
+                comment: comment
+            };
+            report.updatedAt = new Date().toISOString();
+            
+            await db.updateReport(report);
+            loadPendingReports();
+            alert('Report approved successfully');
+        }
+    }
+    
+    // Reject report
+    async function rejectReport(reportId) {
+        const comment = prompt('Enter rejection reason:');
+        if (!comment) {
+            alert('Please provide a rejection reason!');
+            return;
+        }
+        
+        const report = await db.getReport(reportId);
+        
+        if (report) {
+            if (currentUser.role === 'doctor' && report.assignedDoctorId !== currentUser.id) {
+                alert('You can only reject reports assigned to you.');
+                return;
+            }
+            report.status = 'rejected';
+            report.doctorReview = {
+                by: currentUser.username,
+                at: new Date().toISOString(),
+                result: 'Rejected',
+                comment: comment
+            };
+            report.updatedAt = new Date().toISOString();
+            
+            await db.updateReport(report);
+            loadPendingReports();
+            alert('Report rejected');
+        }
+    }
+
+    // Doctor edit controls
+    function doctorToggleEdit(reportId) {
+        if (!currentUser || currentUser.role !== 'doctor') return;
+        const area = document.getElementById(`docEditArea_${reportId}`);
+        if (!area) return;
+        area.style.display = (area.style.display === 'none' || area.style.display === '') ? 'block' : 'none';
+    }
+
+    async function doctorSaveEdit(reportId) {
+        if (!currentUser || currentUser.role !== 'doctor') return;
+        const area = document.getElementById(`docEditArea_${reportId}`);
+        if (!area) return;
+        const newText = (area.value || '').trim();
+        if (!newText) { alert('Report text cannot be empty.'); return; }
+        const report = await db.getReport(reportId);
+        if (!report) return;
+        if (report.assignedDoctorId !== currentUser.id) {
+            alert('You can only edit reports assigned to you.');
+            return;
+        }
+        report.text = newText;
+        report.updatedAt = new Date().toISOString();
+        await db.updateReport(report);
+        loadPendingReports();
+        alert('Report updated.');
+    }
+    
+    // Batch import reports
+    function showBatchImport() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = async function(e) {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = async function(e) {
+                try {
+                    const reports = JSON.parse(e.target.result);
+                    let successCount = 0;
+                    
+                    for (let report of reports) {
+                        report.ownerId = currentUser.id;
+                        report.ownerName = currentUser.username;
+                        // Default to pending so imported cases appear in review queue
+                        report.status = report.status || 'pending';
+                        if (currentUser.role === 'doctor') {
+                            report.assignedDoctorId = currentUser.id;
+                            report.assignedDoctorName = currentUser.username;
+                        }
+                        report.createdAt = new Date().toISOString();
+                        report.updatedAt = new Date().toISOString();
+                        
+                        await db.addReport(report);
+                        successCount++;
+                    }
+                    
+                    alert(`Successfully imported ${successCount} reports!`);
+                    // Refresh doctor review list immediately
+                    if (typeof loadPendingReports === 'function') {
+                        await loadPendingReports();
+                    }
+                } catch (err) {
+                    alert('Import failed: ' + err.message);
+                }
+            };
+            
+            reader.readAsText(file);
+        };
+        input.click();
+    }
+    
+    // ========== Admin Functions ==========
+    // Load user list
+    async function loadUserList() {
+        const users = await db.getAllUsers();
+        const tbody = document.getElementById('userTableBody');
+        
+        tbody.innerHTML = users.map(user => `
+            <tr>
+                <td>${user.username}</td>
+                <td>${user.role === 'admin' ? 'Administrator' : user.role === 'doctor' ? 'Doctor' : 'Regular User'}</td>
+                <td>${new Date(user.createdAt).toLocaleDateString()}</td>
+                <td>
+                    ${user.username !== 'admin' ? `
+                        <button class="button button-xs button-warning" onclick="changeUserRole(${user.id})">Change Role</button>
+                        <button class="button button-xs button-danger" onclick="deleteUserAdmin(${user.id})">Delete</button>
+                    ` : '<span style="color: #999;">System Admin</span>'}
+                </td>
+            </tr>
+        `).join('');
+    }
+    
+    // Change user role
+    async function changeUserRole(userId) {
+        const newRole = prompt('Enter new role (user/doctor/admin):');
+        
+        if (!['user', 'doctor', 'admin'].includes(newRole)) {
+            alert('Invalid role! Please enter user, doctor, or admin');
+            return;
+        }
+        
+        const users = await db.getAllUsers();
+        const user = users.find(u => u.id === userId);
+        
+        if (user) {
+            user.role = newRole;
+            await db.updateUser(user);
+            loadUserList();
+            alert('Role changed successfully');
+        }
+    }
+    
+    // Delete user
+    async function deleteUserAdmin(userId) {
+        if (confirm('Are you sure you want to delete this user? This will also delete all their reports.')) {
+            // Delete all user reports
+            const reports = await db.getUserReports(userId);
+            for (let report of reports) {
+                await db.deleteReport(report.id);
+            }
+            
+            // Delete user
+            await db.deleteUser(userId);
+            loadUserList();
+            alert('User deleted successfully');
+        }
+    }
+    
+    // ========== AI Assistant Functions ==========
+    function toggleAIAssistant() {
+        const assistant = document.getElementById('aiAssistant');
+        assistant.classList.toggle('active');
+        
+        if (assistant.classList.contains('active')) {
+            document.getElementById('aiInput').focus();
+        }
+    }
+    
+    function handleAIInput(event) {
+        if (event.key === 'Enter') {
+            const input = document.getElementById('aiInput');
+            const question = input.value.trim();
+            
+            if (question) {
+                addAIMessage('user', question);
+                
+                // Simulate AI response
+                setTimeout(() => {
+                    const answer = getAIAnswer(question);
+                    addAIMessage('ai', answer);
+                }, 500);
+                
+                input.value = '';
+            }
+        }
+    }
+    
+    function addAIMessage(sender, message) {
+        const messagesContainer = document.getElementById('aiMessages');
+        const messageDiv = document.createElement('div');
+        messageDiv.style.marginBottom = '10px';
+        
+        if (sender === 'user') {
+            messageDiv.innerHTML = `<strong>You:</strong> ${message}`;
+        } else {
+            messageDiv.innerHTML = `<strong>AI:</strong> ${message}`;
+        }
+        
+        messagesContainer.appendChild(messageDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+    
+    function getAIAnswer(question) {
+        // Simple keyword matching for responses
+        const lowerQuestion = question.toLowerCase();
+        
+        if (lowerQuestion.includes('pneumonia')) {
+            return 'Pneumonia is an infection that inflames air sacs in one or both lungs. Symptoms include cough with phlegm, fever, chills, and difficulty breathing.';
+        } else if (lowerQuestion.includes('heart') || lowerQuestion.includes('cardiac')) {
+            return 'The heart is the central organ of the circulatory system, pumping blood throughout the body. Common heart conditions include coronary artery disease, arrhythmias, and heart failure.';
+        } else if (lowerQuestion.includes('x-ray') || lowerQuestion.includes('xray')) {
+            return 'X-ray imaging uses electromagnetic radiation to create images of internal structures. It\'s commonly used to examine bones, lungs, and other organs.';
+        } else if (lowerQuestion.includes('report')) {
+            return 'Medical reports provide professional analysis of examination results. You can upload image files and the system will help generate preliminary reports.';
+        } else if (lowerQuestion.includes('lung')) {
+            return 'The lungs are respiratory organs that facilitate gas exchange. Common lung conditions include pneumonia, COPD, asthma, and lung cancer.';
+        } else if (lowerQuestion.includes('consolidation')) {
+            return 'Consolidation refers to the filling of lung air spaces with liquid, pus, blood, or cells. It appears as increased density on chest X-rays.';
+        } else {
+            return 'I\'m still learning. Please consult professional doctors for accurate medical advice. You can ask about pneumonia, heart conditions, X-ray imaging, or other medical terms.';
+        }
+    }
+    
+    // Click outside modal to close
+    window.onclick = function(event) {
+        const modal = document.getElementById('authModal');
+        if (event.target === modal) {
+            hideAuthModal();
+        }
+    }
+    </script>
+    <script>
+  // 拦截表单提交
+  document.getElementById("uploadReportForm").addEventListener("submit", async function (event) {
+    event.preventDefault(); // 阻止表单刷新
+
+    const fileInput = document.getElementById("imageFile");
+    const file = fileInput.files[0];
+    if (!file) {
+      alert("Please select a medical image file.");
+      return;
+    }
+
+    // 额外字段（比如指派医生、描述）
+    const assignedDoctor = document.getElementById("assignedDoctorSelect").value;
+    const description = document.getElementById("reportDescription").value;
+
+    // 构造 FormData
+    const formData = new FormData();
+    formData.append("image", file);
+    formData.append("assignedDoctor", assignedDoctor);
+    formData.append("description", description);
+
+    try {
+      // 调用 Flask 后端
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to generate report");
+      }
+
+      const data = await response.json();
+
+      // 显示报告
+      document.getElementById("reportContent").innerText = data.summary;
+      document.getElementById("generatedReportSection").style.display = "block";
+
+    } catch (err) {
+      console.error(err);
+      alert("Error generating report: " + err.message);
+    }
+  });
+
+  // ✅ 上传时预览图片
+  document.getElementById("imageFile").addEventListener("change", function () {
+    const file = this.files[0];
+    const previewContainer = document.getElementById("imagePreviewContainer");
+    previewContainer.innerHTML = "";
+
+    if (file) {
+      if (file.type.startsWith("image/")) {
+        const img = document.createElement("img");
+        img.src = URL.createObjectURL(file);
+        img.style.maxWidth = "200px";
+        img.style.marginTop = "10px";
+        previewContainer.appendChild(img);
+      } else {
+        previewContainer.innerHTML = `<p>Selected file: ${file.name}</p>`;
+      }
+    }
+  });
+</script>
+
+  </body>
+</html>

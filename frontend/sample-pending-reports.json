@@ -1,0 +1,24 @@
+[
+{
+  "text": "Chest X-ray: Right lower lobe consolidation. Suggest clinical correlation.",
+  "status": "pending",
+  "images": [
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQImWNgYGD4DwABBAEAO4o8kQAAAABJRU5ErkJggg=="
+  ],
+  "description": "Fever, cough, shortness of breath",
+  "lang": "en"
+},
+{
+  "text": "Chest X-ray: No acute cardiopulmonary process. Heart size normal. Lungs clear.",
+  "status": "pending",
+  "images": [],
+  "description": "Routine checkup",
+  "lang": "en"
+},
+{
+  "text": "Chest X-ray: Diffuse interstitial markings bilaterally; consider atypical infection.",
+  "status": "pending",
+  "description": "Mild dyspnea",
+  "lang": "en"
+}
+]
