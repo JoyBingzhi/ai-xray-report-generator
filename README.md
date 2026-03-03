@@ -46,7 +46,11 @@ pip install -r requirements.txt
 ```bash
 python app.py
 ```
-* Running on http://127.0.0.1:5001
+# Open your browser at http://127.0.0.1:5001
+
+### Note on Full Functionality
+The current version runs on CPU for demonstration purposes.  
+Full functionality, including integration with large language models (LLMs) for enhanced report generation, can be enabled on a GPU.
 
 ## Third‑Party Code / Attribution
 
