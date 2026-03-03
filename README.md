@@ -24,6 +24,14 @@ The system supports three user roles:
   - View all reports from all users.
   - Access pending review reports.
   - Manage user accounts (create, delete, and modify roles).
+
+## Demo & Presentation Videos
+
+- **Demo Video:** [AI X-ray Report Generator Demo](https://www.youtube.com/watch?v=OmkFNDtPLx0)
+  Shows the project results, including uploading X-ray images and generating reports.
+
+- **Presentation Video:** [AI X-ray Report Generator Presentation](https://www.youtube.com/watch?v=yipE4uAlSnA)  
+  Explains the project motivation, methods, algorithms, models used, and limitations.
     
 ## Installation
 
@@ -48,6 +56,13 @@ python app.py
 ```
 Open your browser at http://127.0.0.1:5001
 
+## Documentation
+
+All related project documents are available in the `docs/` folder:
+
+- `AI_XRay_Report_Generator_Paper.pdf` – Detailed methodology and experimental results
+- `Presentation_Slides.pdf` – Slides used in the project presentation
+  
 ### Note on Full Functionality
 The current version runs on CPU for demonstration purposes.  
 Full functionality, including integration with large language models (LLMs) for enhanced report generation, can be enabled on a GPU.
