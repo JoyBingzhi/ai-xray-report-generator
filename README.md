@@ -1,3 +1,27 @@
+## Features
+
+- **Purpose:** Use a pretrained medical AI model to generate accurate medical reports from chest X-ray images.
+
+### 👤 Role-Based Access Control
+
+The system supports three user roles:
+
+- **Regular User**
+  - Upload chest X-ray images.
+  - Automatically generate AI-based medical reports.
+  - Save generated reports to the personal "My Reports" database.
+  - Submit reports for professional review.
+
+- **Doctor**
+  - Access "Pending Reports for Review".
+  - Evaluate and edit AI-generated reports.
+  - Approve or modify reports submitted by users.
+
+- **Admin**
+  - View all reports from all users.
+  - Access pending review reports.
+  - Manage user accounts (create, delete, and modify roles).
+  - 
 ## Installation
 
 ### Option 1: Using Python 3.10 / 3.11 (Recommended)
