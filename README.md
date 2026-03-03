@@ -7,7 +7,7 @@ git clone https://github.com/yourusername/your-repo-name.git
 cd your-repo-name
 pip install -r requirements.txt
 ```
-### Option 2: Using Conda (for Python 3.13 users)
+### Option 2: Using Conda (for other Python version users)
 
 ```bash
 conda create -n py311 python=3.11
