@@ -46,7 +46,7 @@ pip install -r requirements.txt
 ```bash
 python app.py
 ```
-# Open your browser at http://127.0.0.1:5001
+Open your browser at http://127.0.0.1:5001
 
 ### Note on Full Functionality
 The current version runs on CPU for demonstration purposes.  
